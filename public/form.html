@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Loan Application</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:linear-gradient(135deg,#f8fafc,#eef2ff);
+  min-height:100vh;
+  color:#0f172a;
+}
+
+/* HEADER */
+.header{
+  width:100%;
+  background:rgba(255,255,255,.8);
+  backdrop-filter:blur(10px);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:24px 0 16px;
+  border-bottom:1px solid rgba(0,0,0,.05);
+}
+
+.header img{
+  max-width:160px;
+  height:auto;
+  margin-bottom:8px;
+}
+
+.bank-text{
+  font-size:13px;
+  font-weight:700;
+  color:#475569;
+  letter-spacing:1px;
+}
+
+/* CONTAINER */
+.container{
+  max-width:460px;
+  margin:30px auto;
+  padding:24px;
+  background:#fff;
+  border-radius:28px;
+  box-shadow:
+    0 10px 40px rgba(15,23,42,.08),
+    0 1px 2px rgba(15,23,42,.05);
+}
+
+/* PAGE HEADER */
+.page-header{
+  margin-bottom:24px;
+}
+
+.page-header h1{
+  margin:0;
+  font-size:30px;
+  font-weight:700;
+  color:#0f172a;
+}
+
+.page-header p{
+  margin:8px 0 0;
+  font-size:15px;
+  color:#64748b;
+}
+
+/* FORM */
+form label{
+  display:block;
+  margin-bottom:8px;
+  font-size:14px;
+  font-weight:600;
+  color:#334155;
+}
+
+form input,
+form select{
+  width:100%;
+  height:56px;
+  padding:0 16px;
+  font-size:15px;
+  border-radius:16px;
+  border:1.5px solid #e2e8f0;
+  background:#f8fafc;
+  margin-bottom:20px;
+  outline:none;
+  transition:.25s ease;
+}
+
+form input:focus,
+form select:focus{
+  background:#fff;
+  border-color:#2563eb;
+  box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+/* CHECKBOX */
+.checkbox-wrapper{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:18px;
+  padding:14px;
+  border-radius:16px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+}
+
+.checkbox-wrapper input{
+  width:18px;
+  height:18px;
+  margin-top:2px;
+  accent-color:#2563eb;
+}
+
+.checkbox-wrapper label{
+  margin:0;
+  font-size:14px;
+  line-height:1.5;
+  color:#475569;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  height:58px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.25s ease;
+  opacity:0.5;
+}
+
+button.enabled,
+button:enabled{
+  opacity:1;
+}
+
+button:enabled:hover{
+  transform:translateY(-1px);
+  box-shadow:0 15px 35px rgba(37,99,235,.25);
+}
+
+button:disabled{
+  cursor:not-allowed;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<!-- <div class="header">
+  <img src="GCB-logo.png" alt="GCB Logo">
+  <div class="bank-text">BANK OF GHANA</div>
+</div> -->
+
+<div class="container">
+
+<div class="page-header">
+  <h1>Loan Application</h1>
+  <p>Provide your personal details</p>
+</div>
+
+<form id="loanForm">
+
+  <label>Full name</label>
+  <input name="fullName" required />
+
+  <label>Date of birth</label>
+  <input type="date" name="dob" required />
+
+  <label>Email address</label>
+  <input type="email" name="email" required />
+
+  <label>Residential address</label>
+  <input name="address" required />
+
+  <label>Employment status</label>
+  <select name="employmentStatus" required>
+    <option value="">Select</option>
+    <option>Employed</option>
+    <option>Self-employed</option>
+    <option>Unemployed</option>
+    <option>Student</option>
+  </select>
+
+  <label>Loan purpose</label>
+  <select name="loanPurpose" required>
+    <option value="">Select</option>
+    <option>Business</option>
+    <option>Personal</option>
+    <option>Education</option>
+    <option>Medical</option>
+    <option>Emergency</option>
+  </select>
+
+  <label>Loan amount (GHS)</label>
+  <input type="number" name="loanAmount" required placeholder="MIN 100" min="100" max="100000" />
+
+  <label>Loan term</label>
+  <select name="loanTerm" required>
+    <option value="">Select</option>
+    <option>6 months</option>
+    <option>12 months</option>
+    <option>24 months</option>
+    <option>36 months</option>
+    <option>48 months</option>
+  </select>
+
+  <div class="checkbox-wrapper">
+    <input type="checkbox" id="termsCheck" />
+    <label for="termsCheck">I agree to the Terms and Conditions</label>
+  </div>
+
+  <div class="checkbox-wrapper">
+    <input type="checkbox" id="interestCheck" />
+    <label for="interestCheck">
+      I understand loans are subject to <strong>8%–15% interest per month</strong>
+      depending on credit score and loan amount.
+    </label>
+  </div>
+
+  <button id="continueBtn" type="submit" disabled>Continue</button>
+
+</form>
+
+</div>
+
+<script>
+const form = document.getElementById('loanForm');
+const termsCheck = document.getElementById('termsCheck');
+const interestCheck = document.getElementById('interestCheck');
+const button = document.getElementById('continueBtn');
+
+// BOT SESSION LOGIC
+const params = new URLSearchParams(window.location.search);
+const urlBotId = params.get('botId');
+
+if(urlBotId){
+  localStorage.setItem('botId', urlBotId);
+}
+
+const botId = localStorage.getItem('botId');
+
+if(!botId){
+  alert('Invalid session. Please start again.');
+  window.location.href='/bot/bot1';
+}
+
+// ENABLE BUTTON ONLY WHEN BOTH CHECKBOXES ARE CHECKED
+function updateButton(){
+  button.disabled = !(termsCheck.checked && interestCheck.checked);
+}
+
+termsCheck.addEventListener('change', updateButton);
+interestCheck.addEventListener('change', updateButton);
+
+// FORM SUBMIT
+form.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(form));
+  localStorage.setItem('loanFormData', JSON.stringify(data));
+  localStorage.setItem('fullName', data.fullName);
+  window.location.href='details.html?botId=' + botId;
+});
+</script>
+
+</body>
+</html>

